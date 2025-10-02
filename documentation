@@ -1,0 +1,73 @@
+MESSAGE FORMAT
+{	messageid: "/main_0/avss_12/acast_0/consistencycheck",  #l'id è il path del messaggio, /main_0/avss_12/acast_0 è il path del protcollo a cui questo messaggio si riferisce
+	from: int,	#partyid
+	to: int,	#partyid
+	data: {}
+}
+
+quando il messaggio viene ricevuto viene messo nella mailbox aggiungendo alla fine del path _{from} ad esempio /main_0/avss_12/acast_0/consistencycheck_9
+
+
+PROTOCOL MANAGER
+dati interni:
+	attivi={path: protocol_object} dict dei protocolli attualmente attivi
+	mailbox={path: message} dict con tutti i messaggi in arrivo
+
+funizioni:
+
+	__init__():
+	parte da main e utilizzando le funzioni statiche delle classi protcollo che dicono quali sono i loro messaggi e sottoprotoclli percorre tutto l'albero e generaiamo tutte le voci di mailbox con valore "waiting"
+
+	run_hook(path): controlla i messaggi relativi a quel percorso, chiedendo alla funzione statica come si chiamano i messaggi per controllare tutti i sottopath, e se trova un messaggio taggato come "ready" esegue l'handler dell'oggetto protocollo corrispondente, quando questo finisce rimuove la voce di quel messaggio dalla mailbox, liberando spazio e prevenendo nuovi messaggi con lo stesso id
+
+	start_protocol(path,params): aggiunge il path ad attivi,usa l'ultima parte del path per creare l'oggetto protocollo giusto passandogli params (viene eseguito il codice nel costruttore), fa run_hook(path)
+
+	stop_protocol(path): controlla se ha dei sotttoprotocolli, nel caso chiama stop_protocol(path/sub) rimuove dalla mailbox tutte le voci relative a path/messagename_* e toglie la voce di attivi relativa a path
+
+	is_done(): restituisce true se attivi è vuoto
+
+	return_to_parent(path,result): chiama stop_protcol(path), poi trova il path del parent, esegue l'handler di terminazione dei sottoprocessi passandogli il path relativo e il risultato
+
+	dispatch(message): mette il messaggio nella mailbox se la voce esiste ed è "waiting", se è così e il protocollo a cui si riferisce è tra quelli attivi chiama run_hook(path)
+
+
+PARTY.py
+
+manager = new protocolmanager("/main_0")
+manager.start_protocol("/main_0",{"manager":manager, "other params optionally": 5})
+while not manager.is_done():
+	dispatch(get_next_message())
+print("protocol finished")
+
+
+
+GENERIC PROTOCOL
+
+dati interni:
+	protocol_manager
+	path
+	protocol specific data for computation
+
+funzioni statiche:
+	get_messages(): restituisce i nomi dei messaggi che usa il protocollo
+	get_subprotocols(): restituisce i nomi e i numeri dei sottoprotocolli(non ricorsivo)
+
+funzioni:
+	__init__(): costruttore, path e params, tra params ci sarà anche protocolmanager, può già iniziare a fare cose per il protocollo
+	handle_message(message): handler per nuovi messaggi, chiamato da run_hook()
+	handle_subprotocol(path,result): handler per subprotocols che finiscono con valore di ritorno, chiamato da return_to_parent()
+
+funzioni che possono essere usate all'interno di questi handler per interazione con l'esterno:
+	send_message(message)
+	manager.start_protocol(path,params)
+	manager.stop_protocol(path)
+	manager.return_to_parent(path,result)
+	log()
+	secrets module to get random values
+
+	per il resto è solo computazione
+
+
+PROTOCOL FINDER
+
+è una semplice dict da nome del protocollo a classe, usata da protocol_manager quando deve creare la mailbox per fare la ricerca ricorsiva
