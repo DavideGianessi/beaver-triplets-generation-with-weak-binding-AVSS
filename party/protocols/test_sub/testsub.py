@@ -22,13 +22,14 @@ class TestSub(BaseProtocol):
 
     def handle_message(self, message, by, data):
         if message=="dealer_msg":
-            if PARTY_ID != self.dealer:
-                self.send_message(self.dealer, "response", {"value": 6})
+            if by == self.dealer:
+                self.send_message(self.dealer, "response", {"value": b"6"})
                 self.stop()
         elif message=="response":
-            if data.get("value")==6:
+            if data.get("value")==b"6":
                 self.responses.append(by)
-                if len(self.responses) >= 3*t+1:
+                print(f"{self.path}: handling {message} by {by}, responses:{self.responses}")
+                if len(self.responses) >= 3*t:
                     self.return_result(self.responses)
 
     def handle_subprotocol(self, subprotocol, index, result):

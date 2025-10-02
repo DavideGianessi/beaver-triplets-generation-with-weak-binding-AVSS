@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-N=${1:-41}
+N=${1:-5}
 
 PROTOCOL=${2:-test}
 
@@ -52,4 +52,4 @@ networks:
 EOF
 
 echo "[*] Generated docker-compose.yml with $N parties."
-docker-compose up --build
+docker-compose up --build --remove-orphans

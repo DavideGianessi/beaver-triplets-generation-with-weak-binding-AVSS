@@ -12,6 +12,11 @@ ROUTER_PORT = 9000
 OUTPUT_FOLDER = "/outputs"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 log_path = os.path.join(OUTPUT_FOLDER, "router.txt")
+if os.path.exists(log_path):
+    try:
+        os.remove(log_path)
+    except OSError as e:
+        print(f"Error deleting old log file {path}: {e}")
 
 # --- Helpers for encoding/decoding ---
 def encode_message(msg: dict) -> bytes:

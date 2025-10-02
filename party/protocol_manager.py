@@ -1,5 +1,5 @@
 from protocol_finder import PROTOCOLS
-from util.paths import extract_protcol_name,extract_indexed_message_name
+from util.paths import extract_protocol_name,extract_indexed_protocol_name,extract_indexed_message_name,make_protocol_path,make_message_path,extract_protocol_path,extract_parent
 from config import N
 
 class ProtocolManager:
@@ -16,7 +16,7 @@ class ProtocolManager:
         messages=protocol.get_messages()
         for message in messages:
             for i in range(N):
-                messagepath=make_messagepath(path,message,i)
+                messagepath=make_message_path(path,message,sender=i)
                 self.mailbox[messagepath]=None
         subprotocols=protocol.get_subprotocols()
         for subprotocol in subprotocols:
@@ -36,7 +36,7 @@ class ProtocolManager:
         messages=protocol.get_messages()
         for message in messages:
             for i in range(N):
-                messagepath=make_messagepath(path,message,i)
+                messagepath=make_message_path(path,message,sender=i)
                 messagedata= self.mailbox.get(messagepath)
                 if messagedata is not None:
                     self.mailbox.pop(messagepath)
@@ -44,7 +44,7 @@ class ProtocolManager:
                     protocol.handle_message(message,by,messagedata)
 
     def start_protocol(self,path,params=None):
-        if path in attivi or path in stopped:
+        if path in self.attivi or path in self.stopped:
             raise Exception(f"protocol {path} started twice")
         Protocollo=PROTOCOLS[extract_protocol_name(path)]
         self.attivi[path]=Protocollo(self,path,params)
@@ -60,7 +60,7 @@ class ProtocolManager:
         messages=protocol.get_messages()
         for message in messages:
             for i in range(N):
-                messagepath=make_messagepath(path,message,i)
+                messagepath=make_message_path(path,message,sender=i)
                 self.mailbox.pop(messagepath,None)
         subprotocols=protocol.get_subprotocols()
         for subprotocol in subprotocols:
@@ -79,7 +79,7 @@ class ProtocolManager:
             self.result=result
         else:
             parent= self.attivi.get(parent_path)
-            parent.handle_subprotocol(indexed_protocol_name,result)
+            parent.handle_subprotocol(protocol_name,index,result)
         
 
 

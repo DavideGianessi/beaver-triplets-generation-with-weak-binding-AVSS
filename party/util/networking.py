@@ -4,6 +4,7 @@ import struct
 from queue import Queue
 from threading import Thread
 from config import ROUTER_HOST,ROUTER_PORT,PARTY_ID
+import time
 
 _inbox = Queue()
 _sock = None
@@ -31,8 +32,29 @@ def decode_message(sock: socket.socket) -> dict:
 
 def connect_to_router():
     global _sock
-    _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    _sock.connect((ROUTER_HOST, ROUTER_PORT))
+    
+    MAX_RETRIES = 10
+    RETRY_DELAY = 2
+    
+    for attempt in range(MAX_RETRIES):
+        try:
+            _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            _sock.connect((ROUTER_HOST, ROUTER_PORT))
+            print(f"[party {PARTY_ID}] Successfully connected to router.")
+            break 
+        except ConnectionRefusedError:
+            if attempt < MAX_RETRIES - 1:
+                print(f"[party {PARTY_ID}] Connection refused. Retrying in {RETRY_DELAY}s... (Attempt {attempt + 1}/{MAX_RETRIES})")
+                time.sleep(RETRY_DELAY)
+            else:
+                print(f"[party {PARTY_ID}] Failed to connect to router after {MAX_RETRIES} attempts.")
+                raise 
+        except Exception as e:
+            print(f"[party {PARTY_ID}] An error occurred during connection attempt: {e}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY)
+            else:
+                raise 
     Thread(target=_reader, daemon=True).start()
 
 def _reader():
