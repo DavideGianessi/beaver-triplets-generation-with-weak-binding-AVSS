@@ -33,6 +33,7 @@ for i in $(seq 0 $((N - 1))); do
       - N_PARTIES=$N
       - ROUTER_HOST=router
       - MAIN=$PROTOCOL
+      - GRACE_PERIOD=3
     networks:
       mpcnet:
         ipv4_address: 172.20.$((ip / 256)).$((ip % 256))

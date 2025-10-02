@@ -62,18 +62,12 @@ class ProtocolManager:
             for i in range(N):
                 messagepath=make_message_path(path,message,sender=i)
                 self.mailbox.pop(messagepath,None)
-        subprotocols=protocol.get_subprotocols()
-        for subprotocol in subprotocols:
-            protocolpath=make_protocol_path(path,subprotocol)
-            self.stop_protocol(protocolpath)
-        
 
     def is_done(self):
-        return len(self.attivi)==0
+        return self.result is not None
 
     def return_to_parent(self,path,result):
         protocol_name,index=extract_indexed_protocol_name(path)
-        self.stop_protocol(path)
         parent_path=extract_parent(path)
         if parent_path == "/":
             self.result=result

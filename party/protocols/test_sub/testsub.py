@@ -31,6 +31,7 @@ class TestSub(BaseProtocol):
                 print(f"{self.path}: handling {message} by {by}, responses:{self.responses}")
                 if len(self.responses) >= 3*t:
                     self.return_result(self.responses)
+                    self.stop()
 
     def handle_subprotocol(self, subprotocol, index, result):
         pass

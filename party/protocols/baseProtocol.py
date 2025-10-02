@@ -6,19 +6,19 @@ class BaseProtocol(ABC):
     def __init__(self, manager, path):
         self.manager = manager
         self.path = path
+        self.returned = False
 
     def start_subprotocol(self, full_name, params=None):
         subpath = make_protocol_path(self.path,full_name)
         self.manager.start_protocol(subpath, params=params)
 
-    def stop_subprotocol(self, full_name):
-        subpath = make_protocol_path(self.path,full_name)
-        self.manager.stop_protocol(subpath)
-
     def stop(self):
         self.manager.stop_protocol(self.path)
 
     def return_result(self, result):
+        if self.returned:
+            raise Exception("you have already returned from this protocol")
+        self.returned = True
         self.manager.return_to_parent(self.path, result)
 
     def send_message(self, to, message_name, data):
