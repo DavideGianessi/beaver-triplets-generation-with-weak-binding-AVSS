@@ -15,6 +15,10 @@ class BaseProtocol(ABC):
     def stop(self):
         self.manager.stop_protocol(self.path)
 
+    def stop_subprotocol(self, full_name):
+        subpath = make_protocol_path(self.path,full_name)
+        self.manager.stop_protocol(subpath)
+
     def return_result(self, result):
         if self.returned:
             raise Exception("you have already returned from this protocol")

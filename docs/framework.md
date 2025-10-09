@@ -26,6 +26,8 @@ Each instance of a protocol is given an ID, composed of the activation path. Sin
 
 This means that this is the first instance of Bracha’s broadcast protocol, started by the twelfth instance of AVSS, which itself was started by the root protocol `main`. Protocol IDs always end with `/`.
 
+The indexes are not necessarily all used sequentially, gaps are allowed.
+
 ## Messages
 
 Each message consists of an ID, the `party_id` of the sender, the `party_id` of the receiver, and the data. Since communication channels are assumed to be secure, we trust that nobody can forge the `from` field (the router rejects any message with an inconsistent `from`).  
@@ -37,11 +39,15 @@ Each message consists of an ID, the `party_id` of the sender, the `party_id` of 
   "messageid": "/main_0/avss_11/acast_0/consistencycheck",
   "from": int,
   "to": int,
-  "data": bytes
+  "data": json+bytes structure
 }
 ```
 
 When sending a message, the ID is constructed as the protocol instance ID + the message name. When received by the protocol, an additional suffix `_{from}` is appended to distinguish the sending party. Any duplicate message with the same ID from the same party will be discarded (honest parties do not double-send).
+
+## Parties
+
+Party ids range from 1 to N, just as they do in the paper
 
 ## Infrastructure
 

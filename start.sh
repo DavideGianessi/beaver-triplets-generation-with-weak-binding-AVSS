@@ -21,7 +21,7 @@ services:
       - ./outputs:/outputs
 EOF
 
-for i in $(seq 0 $((N - 1))); do
+for i in $(seq 1 $N ); do
   ip=$((10 + i))
   cat >> docker-compose.yml <<EOF
 

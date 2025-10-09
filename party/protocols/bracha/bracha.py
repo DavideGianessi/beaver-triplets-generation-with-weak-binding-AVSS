@@ -17,9 +17,10 @@ class Bracha(BaseProtocol):
         self.readys = {}
         self.ireadied = False
         if PARTY_ID == self.speaker:
+            assert(isinstance(params["value"],bytes))
             self.iechoed=True
             self.echos[params["value"]]=1
-            for i in range(N):
+            for i in range(1,N+1):
                 if i != PARTY_ID:
                     self.send_message(i, "init", {"v": params["value"]})
                     self.send_message(i, "echo", {"v": params["value"]})
@@ -29,7 +30,7 @@ class Bracha(BaseProtocol):
             if by == self.speaker:
                 self.value=data["v"]
                 self.echos[data["v"]] = self.echos.get(data["v"],0)+1 # my implicit echo
-                for i in range(N):
+                for i in range(1,N+1):
                     if i!= PARTY_ID:
                         self.send_message(i, "echo", {"v": data["v"]})
         elif message=="echo":
@@ -39,7 +40,7 @@ class Bracha(BaseProtocol):
         if not self.ireadied and (self.echos.get(data["v"],0)>=N-t or self.readys.get(data["v"],0)>=t+1):
             self.ireadied = True
             self.readys[data["v"]] = self.readys.get(data["v"],0)+1 #my implicit ready
-            for i in range(N):
+            for i in range(1,N+1):
                 if i!= PARTY_ID:
                     self.send_message(i, "ready", {"v": data["v"]})
         if self.readys.get(data["v"],0)>=2*t+1: #accept the value and terminate protocol

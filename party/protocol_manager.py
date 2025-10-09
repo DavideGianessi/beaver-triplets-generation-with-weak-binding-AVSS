@@ -15,7 +15,7 @@ class ProtocolManager:
         protocol=PROTOCOLS[protocol_name]
         messages=protocol.get_messages()
         for message in messages:
-            for i in range(N):
+            for i in range(1,N+1):
                 messagepath=make_message_path(path,message,sender=i)
                 self.mailbox[messagepath]=None
         subprotocols=protocol.get_subprotocols()
@@ -24,6 +24,9 @@ class ProtocolManager:
             self.populate_mailbox(protocolpath)
 
     def dispatch(self,message):
+        if (not isinstance(message.get('messageid'),str) or
+            not isinstance(message.get('from') ,int)):
+                return
         messageid=f"{message.get('messageid')}_{message.get('from')}"
         if messageid in self.mailbox and self.mailbox.get(messageid) is None:
             self.mailbox[messageid]=message.get("data")
@@ -35,7 +38,7 @@ class ProtocolManager:
         protocol=self.attivi[path]
         messages=protocol.get_messages()
         for message in messages:
-            for i in range(N):
+            for i in range(1,N+1):
                 messagepath=make_message_path(path,message,sender=i)
                 messagedata= self.mailbox.get(messagepath)
                 if messagedata is not None:
@@ -59,7 +62,7 @@ class ProtocolManager:
         protocol=PROTOCOLS[protocol_name]
         messages=protocol.get_messages()
         for message in messages:
-            for i in range(N):
+            for i in range(1,N+1):
                 messagepath=make_message_path(path,message,sender=i)
                 self.mailbox.pop(messagepath,None)
 

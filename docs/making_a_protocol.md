@@ -49,6 +49,9 @@ Within these handlers, the protocol may only interact with the rest of the progr
   Ensures the protocol is no longer useful to anyone else before calling this (e.g., it has already sent all messages it could).  
   Follow with `return` to terminate execution of the handler.
 
+- `self.stop_subprotocol()`  
+  Ensures the subprotocol is no longer useful to anyone else before calling this (e.g., in VSS, that broadcast is not in the star sent by the dealer).  
+
 - `self.return_result(result_dict)`  
   Sends the result to the parent protocol’s handler.  
   This should only be called once.  

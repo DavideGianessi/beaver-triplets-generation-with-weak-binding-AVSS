@@ -16,9 +16,9 @@ class TestSub(BaseProtocol):
         self.responses = []
 
         if PARTY_ID == self.dealer:
-            for i in range(N):
+            for i in range(1,N+1):
                 if i != PARTY_ID:
-                    self.send_message(i, "dealer_msg", {"value": 5})
+                    self.send_message(i, "dealer_msg", {"value": b"5"})
 
     def handle_message(self, message, by, data):
         if message=="dealer_msg":

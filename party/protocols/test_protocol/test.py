@@ -8,11 +8,11 @@ class TestProtocol(BaseProtocol):
 
     @staticmethod
     def get_subprotocols():
-        return [f"testsub_{i}" for i in range(N)]
+        return [f"testsub_{i}" for i in range(1,N+1)]
 
     def __init__(self, manager, path, params):
         super().__init__(manager, path)
-        for i in range(N):
+        for i in range(1,N+1):
             self.start_subprotocol(f"testsub_{i}",params={"dealer":i})
 
     def handle_message(self, message, by, data):
