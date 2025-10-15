@@ -17,7 +17,6 @@ class Bracha(BaseProtocol):
         self.readys = {}
         self.ireadied = False
         if PARTY_ID == self.speaker:
-            assert(isinstance(params["value"],bytes))
             self.iechoed=True
             self.echos[params["value"]]=1
             for i in range(1,N+1):
