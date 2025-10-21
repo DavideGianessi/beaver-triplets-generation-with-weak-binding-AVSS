@@ -7,8 +7,15 @@ class TestProtocol(BaseProtocol):
         return []
 
     @staticmethod
-    def get_subprotocols():
-        return [f"testsub_{i}" for i in range(1,N+1)]
+    def get_subprotocols(params):
+        subs={}
+        for i in range(1,N+1):
+            subs[f"testsub_{i}"]={"dealer":i}
+        return subs
+
+    @staticmethod
+    def get_schema(message,by,params):
+        return None
 
     def __init__(self, manager, path, params):
         super().__init__(manager, path)

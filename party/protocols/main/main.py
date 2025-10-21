@@ -7,8 +7,12 @@ class Main(BaseProtocol):
         return []
 
     @staticmethod
-    def get_subprotocols():
-        return ["bracha_0"]
+    def get_subprotocols(params):
+        return {"bracha_0": {"speaker": 3}}
+
+    @staticmethod
+    def get_schema(message,by,params):
+        return None
 
     def __init__(self, manager, path, params):
         super().__init__(manager, path)

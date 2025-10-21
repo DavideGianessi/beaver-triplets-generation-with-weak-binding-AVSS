@@ -6,7 +6,9 @@ A new protocol must extend the abstract class `BaseProtocol`.
 
 - The protocol must define **at compile time**:
   - The list of messages it involves → `get_messages()`
-  - The subprotocols it starts → `get_subprotocols()`
+  - The subprotocols it starts and with which static params → `get_subprotocols(params)`
+  - The schema of each message → `get_schema(message,by,params)`
+the params here are those known at compile time, like who is the dealer of that instance, anything that depends on data and randomness must be checked within the handler
 
 - The protocol’s constructor must accept the following arguments:
 
@@ -46,16 +48,16 @@ Within these handlers, the protocol may only interact with the rest of the progr
   Starts a new subprotocol.
 
 - `self.stop()`  
-  Ensures the protocol is no longer useful to anyone else before calling this (e.g., it has already sent all messages it could).  
+  Ensure the protocol is no longer useful to anyone else before calling this (e.g., it has already sent all messages it could).  
   Follow with `return` to terminate execution of the handler.
 
 - `self.stop_subprotocol()`  
-  Ensures the subprotocol is no longer useful to anyone else before calling this (e.g., in VSS, that broadcast is not in the star sent by the dealer).  
+  Ensure the subprotocol is no longer useful to anyone else before calling this (e.g., in VSS, that broadcast is not in the star sent by the dealer).  
 
 - `self.return_result(result_dict)`  
   Sends the result to the parent protocol’s handler.  
   This should only be called once.  
-  **Note:** It does not stop the protocol; you must call `self.stop()` explicitly.
+  **Note:** It does not stop the protocol; if needed, you must call `self.stop()` explicitly.
 
 - `self.send_message(to, message_name, data)`  
   Sends a message to another party.

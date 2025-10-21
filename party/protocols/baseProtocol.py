@@ -36,7 +36,12 @@ class BaseProtocol(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_subprotocols():
+    def get_subprotocols(params):
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def get_schema(message,by,params):
         ...
 
     @abstractmethod

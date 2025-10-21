@@ -10,6 +10,22 @@ class Bracha(BaseProtocol):
     def get_subprotocols():
         return []
 
+    @staticmethod
+    def get_schema(message,by,params):
+        if message=="init" and params["speaker"]==by:
+            return {    "type": "dict",
+                        "keys": {
+                            "v": params["content_schema"],
+                        },
+                    }
+        if message=="echo" or message=="ready":
+            return {    "type": "dict",
+                        "keys": {
+                            "v": params["content_schema"],
+                        },
+                    }
+        return None
+
     def __init__(self, manager, path, params):
         super().__init__(manager, path)
         self.speaker = params["speaker"]
@@ -26,12 +42,11 @@ class Bracha(BaseProtocol):
 
     def handle_message(self, message, by, data):
         if message=="init":
-            if by == self.speaker:
-                self.value=data["v"]
-                self.echos[data["v"]] = self.echos.get(data["v"],0)+1 # my implicit echo
-                for i in range(1,N+1):
-                    if i!= PARTY_ID:
-                        self.send_message(i, "echo", {"v": data["v"]})
+            self.value=data["v"]
+            self.echos[data["v"]] = self.echos.get(data["v"],0)+1 # my implicit echo
+            for i in range(1,N+1):
+                if i!= PARTY_ID:
+                    self.send_message(i, "echo", {"v": data["v"]})
         elif message=="echo":
             self.echos[data["v"]] = self.echos.get(data["v"],0)+1
         elif message=="ready":
