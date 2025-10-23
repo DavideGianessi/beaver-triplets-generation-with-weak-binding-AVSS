@@ -8,7 +8,7 @@ class Main(BaseProtocol):
 
     @staticmethod
     def get_subprotocols(params):
-        return {"bracha_0": {"speaker": 3}}
+        return {"bracha_0": {"speaker": 3,"content_schema": {"type":"bytes","len":7}}}
 
     @staticmethod
     def get_schema(message,by,params):

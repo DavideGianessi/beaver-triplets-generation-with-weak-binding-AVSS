@@ -37,7 +37,7 @@ class TestSub(BaseProtocol):
                     self.send_message(i, "dealer_msg", {"value": b"5"})
 
     def handle_message(self, message, by, data):
-        if message=="dealer_msg":
+        if message=="dealer_msg" and by==self.dealer:
             self.send_message(self.dealer, "response", {"value": b"6"})
             self.stop()
         elif message=="response":

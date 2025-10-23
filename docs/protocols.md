@@ -10,6 +10,14 @@ Bracha’s protocol is used to broadcast a message from one party to all others.
 - If the sender is honest, the protocol will terminate.  
 - If one honest party terminates with a value, then all honest parties will terminate with the same value.  
 
+### Parameters
+
+The protocol takes one optional static parameter:
+   - "speaker" : who the speaker is, can be omitted if unknown at compile time
+and one mandatory static parameter:
+   - "content\_schema" : the schema to validate the structure of the content (see schemas)
+The protocol always takes one parameter "speaker" at runtime, for the speaker only it also takes a "value" parameter
+
 ### Protocol Steps
 
 1. **INIT phase**  

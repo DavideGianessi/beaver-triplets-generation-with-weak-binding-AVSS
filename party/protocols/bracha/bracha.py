@@ -12,13 +12,13 @@ class Bracha(BaseProtocol):
 
     @staticmethod
     def get_schema(message,by,params):
-        if message=="init" and params["speaker"]==by:
+        if message=="echo" or message=="ready":
             return {    "type": "dict",
                         "keys": {
                             "v": params["content_schema"],
                         },
                     }
-        if message=="echo" or message=="ready":
+        if message=="init" and (params.get("speaker")==by or "speaker" not in params):
             return {    "type": "dict",
                         "keys": {
                             "v": params["content_schema"],
@@ -41,7 +41,7 @@ class Bracha(BaseProtocol):
                     self.send_message(i, "echo", {"v": params["value"]})
 
     def handle_message(self, message, by, data):
-        if message=="init":
+        if message=="init" and by==self.speaker:
             self.value=data["v"]
             self.echos[data["v"]] = self.echos.get(data["v"],0)+1 # my implicit echo
             for i in range(1,N+1):
