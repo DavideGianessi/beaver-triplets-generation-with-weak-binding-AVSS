@@ -2,16 +2,18 @@ from config import N,t
 from collections import deque
 
 def normalize_graph(matrix):
+    res=[[0 for i in range(N+1)] for i2 in range(N+1)]
     for i in range(1,N+1):
         for i2 in range(1,N+1):
-            matrix[i][i2]//=2
-    return matrix
+            res[i][i2]=matrix[i][i2]//2
+    return res
 
 def complement_graph(graph):
+    res=[[0 for i in range(N+1)] for i2 in range(N+1)]
     for i in range(1,N+1):
         for i2 in range(1,N+1):
-            graph[i][i2]= 1-graph[i][i2]
-    return graph
+            res[i][i2]= 1-graph[i][i2]
+    return res
 
 def find_maximum_matching(graph):
     match = [0] * (N + 1)
@@ -117,7 +119,7 @@ def find_star(graph):
     C = set([i for i in range(1,N+1) if i not in S.union(T)])
     D = set()
     for i in range(1,N+1):
-        if all([graph[i][i2]==1 for i2 in C]):
+        if all([graph[i][i2]==1 or i==i2 for i2 in C]):
             D.add(i)
     G = set()
     for i in range(1,N+1):

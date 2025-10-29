@@ -47,6 +47,7 @@ All the keys have predefined string names, then define for each key the schema o
 ## Lists
 
 len is the lenght that the list must have, provide the schema that all items of that list must satisfay
+maxlen sets a limit to the lenght, but does not need to be exact
 
 ## Bytes
 

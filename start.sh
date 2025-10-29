@@ -3,6 +3,8 @@ set -e
 
 N=${1:-5}
 
+MODULUS=170141183460469231731687303715884105727   #2^127-1
+
 PROTOCOL=${2:-test}
 
 mkdir -p ./outputs
@@ -31,6 +33,7 @@ for i in $(seq 1 $N ); do
     environment:
       - PARTY_ID=$i
       - N_PARTIES=$N
+      - MODULUS=$MODULUS
       - ROUTER_HOST=router
       - MAIN=$PROTOCOL
       - GRACE_PERIOD=3

@@ -12,13 +12,13 @@ class TestSub(BaseProtocol):
 
     @staticmethod
     def get_schema(message,by,params):
-        if params["dealer"]==PARTY_ID and message="response":
+        if params["dealer"]==PARTY_ID and message=="response":
             return {    "type": "dict",
                         "keys": {
                         "value": {"type": "bytes", "len": 1}
                         },
                     }
-        if params["dealer"]==by and message="dealer_msg" :
+        if params["dealer"]==by and message=="dealer_msg" :
             return {    "type": "dict",
                         "keys": {
                         "value": {"type": "bytes", "len": 1}

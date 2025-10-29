@@ -1,64 +1,62 @@
 import galois
 import numpy as np
+from type_defs import UnivariatePolynomial
 
-def reconstruct_polynomial(points, t, GF):
-    """
-    Reconstruct a degree ≤ t polynomial P(x) from possibly corrupted points (x_i, y_i)
-    over a finite field GF.
+def construct_polynomial(points, n, t, GF):
+    num_Q = n + t + 1
+    num_E = t + 1
+    num_vars = num_Q + num_E
+    N=len(points)
+    if N <= n + t:
+        return None
+
+    A_rows = []
+    for x, y in points:
+        Q_coeffs = [x**i for i in range(num_Q)]
+        E_coeffs = [-y * (x**i) for i in range(num_E)]
+        row = GF(Q_coeffs + E_coeffs)
+        if len(A_rows) == 0:
+            A_rows.append(row)
+        else:
+            temp = GF(A_rows + [row])
+            if np.linalg.matrix_rank(temp) > np.linalg.matrix_rank(GF(A_rows)):
+                A_rows.append(row)
     
-    Args:
-        points: list of tuples (x_i, y_i) where x_i, y_i are elements of GF
-        t: maximum number of errors to tolerate
-        GF: a galois.Field class, e.g., GF = galois.GF(2**8)
+    m = len(A_rows)
+    if m > num_vars:
+        return None
     
-    Returns:
-        univariatePolynomial P if unique and consistent, else None
-    """
-    n = len(points)
-    if n < 2 * t + 1:
-        # Guaranteed non-uniqueness
+    while len(A_rows) < num_vars:
+        A_rows.append(GF.Zeros(num_vars))
+    
+    A = GF(A_rows)
+
+    kernel = A.null_space()
+    dim = kernel.shape[0]
+    if dim == 0:
+        return None
+    
+    valid_Ps = []
+
+    for i in range(kernel.shape[0]):
+        vec = kernel[i, :]
+        Q_vec = galois.Poly(vec[:num_Q], field=GF)
+        E_vec = galois.Poly(vec[num_Q:], field=GF)
+        P_vec, rem = divmod(Q_vec, E_vec)
+        if rem == 0:
+            valid_Ps.append(P_vec)
+
+    if len(valid_Ps) == 0:
         return None
 
-    num_q = 2 * t + 1
-    num_e = t               # e_t = 1 fixed
-    num_unknowns = num_q + num_e
+    first_P = valid_Ps[0]
+    for P in valid_Ps[1:]:
+        if P != first_P:
+            return None
 
-    # Build linear system over GF
-    A = GF.Zeros((n, num_unknowns))
-    b = GF.Zeros(n)
-
-    for i, (x, y) in enumerate(points):
-        # Q(x) part: x^0 ... x^(2t)
-        for j in range(num_q):
-            A[i, j] = x**j
-        # E(x) part: -y * x^k for k = 0..t-1
-        for k in range(num_e):
-            A[i, num_q + k] = -y * (x**k)
-        # RHS: y * x^t
-        b[i] = y * (x**t)
-
-    # Solve the linear system over GF
-    try:
-        coeffs = galois.linalg.solve(A, b)
-    except galois.linalg.LinAlgError:
-        return None  # No solution or inconsistent
-
-    # Extract Q and E coefficients
-    q_coeffs = [int(coeffs[i]) for i in range(num_q)]
-    e_coeffs = [int(coeffs[num_q + i]) for i in range(num_e)] + [1]  # append e_t=1
-
-    # Construct polynomials using galois.Poly
-    Q = galois.Poly(q_coeffs, field=GF)
-    E = galois.Poly(e_coeffs, field=GF)
-
-    # Divide Q by E
-    P, remainder = divmod(Q, E)
-    if remainder != 0:
-        return None
-
-    # Optional verification: check at least 2t+1 points match
-    match_count = sum(1 for x, y in points if P(x) == y)
-    if match_count < 2 * t + 1:
-        return None
-
-    return P
+    coeffs=list(first_P.coeffs)+[GF(0) for i in range(n+1-len(first_P.coeffs))]
+    P=UnivariatePolynomial(coeffs,GF)
+    thesum=sum(P(x) == y for x, y in points)
+    if sum(P(x) == y for x, y in points) >= N - t:
+        return P
+    return None

@@ -36,6 +36,8 @@ def validate(value, schema):
             return False
         if "len" in schema and len(value) != schema["len"]:
             return False
+        if "maxlen" in schema and len(value) > schema["maxlen"]:
+            return False
         item_schema = schema.get("items")
         if item_schema:
             for v in value:

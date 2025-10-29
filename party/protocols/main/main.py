@@ -1,5 +1,10 @@
-from config import PARTY_ID,N,t
+from config import PARTY_ID,N,t,p
 from protocols.baseProtocol import BaseProtocol
+from util.logging import log
+import galois
+from type_defs import BivariatePolynomial
+
+GF=galois.GF(p)
 
 class Main(BaseProtocol):
     @staticmethod
@@ -8,7 +13,7 @@ class Main(BaseProtocol):
 
     @staticmethod
     def get_subprotocols(params):
-        return {"bracha_0": {"speaker": 3,"content_schema": {"type":"bytes","len":7}}}
+        return {"packed_vss_0": {"dealer": 3,"batching":2}}
 
     @staticmethod
     def get_schema(message,by,params):
@@ -16,7 +21,16 @@ class Main(BaseProtocol):
 
     def __init__(self, manager, path, params):
         super().__init__(manager, path)
-        self.start_subprotocol(f"bracha_0",params={"speaker":3,"value":b"myvalue"})
+        if PARTY_ID==3:
+            coeffs = [ [x*100+y for y in range(t+1)] for x in range(t+t//2+1)]
+            S1=BivariatePolynomial(coeffs, GF)
+            coeffs = [ [x*1000+y for y in range(t+1)] for x in range(t+t//2+1)]
+            S2=BivariatePolynomial(coeffs, GF)
+            print(f"input: [{S1},{S2}]")
+            log(f"input: [{S1},{S2}]")
+            self.start_subprotocol(f"packed_vss_0",params={"dealer":3,"batching":2,"input":[S1,S2]})
+        else:
+            self.start_subprotocol(f"packed_vss_0",params={"dealer":3,"batching":2})
 
     def handle_message(self, message, by, data):
         pass
