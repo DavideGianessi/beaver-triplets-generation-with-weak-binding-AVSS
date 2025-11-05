@@ -95,6 +95,38 @@ class TrivariatePolynomial:
                         terms.append(term)
         return " + ".join(terms) if terms else "0"
 
+    def __add__(self, other):
+        if not isinstance(other, TrivariatePolynomial):
+            raise TypeError("Can only add TrivariatePolynomial to another TrivariatePolynomial")
+        if self.field is not other.field:
+            raise TypeError("Polynomials must be over the same field")
+
+        field = self.field
+
+        # Resulting degree = max of declared degrees along each axis
+        deg_x = max(self.degree_x, other.degree_x)
+        deg_y = max(self.degree_y, other.degree_y)
+        deg_z = max(self.degree_z, other.degree_z)
+
+        # Initialize zero coefficients
+        coeffs = [[[field(0) for _ in range(deg_z + 1)]
+                   for _ in range(deg_y + 1)]
+                   for _ in range(deg_x + 1)]
+
+        # Add both polynomials (safe for different shapes)
+        for i in range(deg_x + 1):
+            for j in range(deg_y + 1):
+                for k in range(deg_z + 1):
+                    c = field(0)
+                    if i <= self.degree_x and j <= self.degree_y and k <= self.degree_z:
+                        c += self.coeffs[i][j][k]
+                    if i <= other.degree_x and j <= other.degree_y and k <= other.degree_z:
+                        c += other.coeffs[i][j][k]
+                    coeffs[i][j][k] = c
+
+        coeffs = [[[int(c) for c in row_k] for row_k in row_j] for row_j in coeffs]
+        return TrivariatePolynomial(coeffs, field)
+
     # ---------------- Serialization ----------------
     def to_bytes(self) -> bytes:
         """

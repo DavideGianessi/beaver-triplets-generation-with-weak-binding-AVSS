@@ -69,6 +69,21 @@ class UnivariatePolynomial:
             return False
         return all(a == b for a, b in zip(self.coeffs, other.coeffs))
 
+    def __neg__(self):
+        neg_coeffs = [ -c for c in self.coeffs ]
+        return UnivariatePolynomial(neg_coeffs, self.field)
+
+    def __sub__(self, other):
+        if not isinstance(other, UnivariatePolynomial):
+            return NotImplemented
+        if self.field is not other.field:
+            raise TypeError("Cannot subtract polynomials over different fields")
+        max_len = max(len(self.coeffs), len(other.coeffs))
+        coeffs1 = self.coeffs + [self.field(0)] * (max_len - len(self.coeffs))
+        coeffs2 = other.coeffs + [self.field(0)] * (max_len - len(other.coeffs))
+        new_coeffs = [a - b for a, b in zip(coeffs1, coeffs2)]
+        return UnivariatePolynomial(new_coeffs, self.field)
+
     def to_bytes(self) -> bytes:
         return b"".join(int(c).to_bytes(self.field(0).dtype.itemsize, "little") for c in self.coeffs)
 
