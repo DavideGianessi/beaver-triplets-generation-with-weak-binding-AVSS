@@ -65,6 +65,57 @@ class BivariatePolynomial:
                     terms.append(term)
         return " + ".join(terms) if terms else "0"
 
+    def __add__(self, other):
+        if not isinstance(other, BivariatePolynomial):
+            return NotImplemented
+        if self.field is not other.field:
+            raise TypeError("Cannot add polynomials over different fields")
+        max_x = max(self.degree_x, other.degree_x)
+        max_y = max(self.degree_y, other.degree_y)
+        def get_coeff(poly, i, j):
+            if i <= poly.degree_x and j <= poly.degree_y:
+                return poly.coeffs[i][j]
+            return poly.field(0)
+        new_coeffs = [
+            [get_coeff(self, i, j) + get_coeff(other, i, j)
+             for j in range(max_y + 1)]
+            for i in range(max_x + 1)
+        ]
+        return BivariatePolynomial([[int(c) for c in row] for row in new_coeffs], self.field)
+
+    def __mul__(self, scalar):
+        if isinstance(scalar, (int, np.integer)):
+            scalar = self.field(scalar)
+            new_coeffs = [
+                [c * scalar for c in row]
+                for row in self.coeffs
+            ]
+            return BivariatePolynomial([[int(c) for c in row] for row in new_coeffs], self.field)
+        if isinstance(other, BivariatePolynomial):
+            if self.field is not other.field:
+                raise TypeError("Polynomials must be over the same field")
+            field = self.field
+            deg_x = self.degree_x + other.degree_x
+            deg_y = self.degree_y + other.degree_y
+
+            coeffs = [
+                [field(0) for _ in range(deg_y + 1)]
+                for _ in range(deg_x + 1)
+            ]
+
+            for i1 in range(self.degree_x + 1):
+                for j1 in range(self.degree_y + 1):
+                    for i2 in range(other.degree_x + 1):
+                        for j2 in range(other.degree_y + 1):
+                            coeffs[i1 + i2][j1 + j2] += self.coeffs[i1][j1] * other.coeffs[i2][j2]
+
+            coeffs = [[int(c) for c in row] for row in coeffs]
+            return BivariatePolynomial(coeffs, field)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     # ---------------- Serialization ----------------
     def to_bytes(self) -> bytes:
         """
