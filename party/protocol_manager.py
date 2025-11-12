@@ -1,6 +1,7 @@
 from protocol_finder import PROTOCOLS
 from util.paths import extract_protocol_name,extract_indexed_protocol_name,extract_indexed_message_name,make_protocol_path,make_message_path,extract_protocol_path,extract_parent
 from util.schemas import validate
+from util.logging import log
 from config import N
 
 class ProtocolManager:
@@ -47,6 +48,8 @@ class ProtocolManager:
             protocol_path=extract_protocol_path(messageid)
             if protocol_path in self.attivi:
                 self.run_hook(protocol_path)
+        else:
+            log(f"rejected message {messageid=}")
 
     def run_hook(self,path):
         protocol=self.attivi[path]

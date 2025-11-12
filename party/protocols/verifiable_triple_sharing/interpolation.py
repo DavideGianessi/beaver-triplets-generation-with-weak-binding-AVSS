@@ -2,6 +2,7 @@ import galois
 from type_defs import BivariatePolynomial, TrivariatePolynomial, UnivariatePolynomial
 
 def lagrange_interpolate_univariate(points: list[tuple[int, int]], field: type[galois.FieldArray]) -> UnivariatePolynomial:
+    p=field.characteristic
     n = len(points)
     assert n > 0, "Need at least one point"
     xs, ys = zip(*points)
@@ -13,23 +14,33 @@ def lagrange_interpolate_univariate(points: list[tuple[int, int]], field: type[g
     x_poly = UnivariatePolynomial([0, 1], field)
     P = zero_poly
     for i in range(n):
-        xi = field(xs[i])
-        yi = field(ys[i])
+        if isinstance(xs[i],int):
+            xi = field(xs[i]%p)
+        else:
+            xi = xs[i]
+        if isinstance(ys[i],int):
+            yi = field(ys[i]%p)
+        else:
+            yi = ys[i]
         Li = UnivariatePolynomial([1], field)
         denom = field(1)
         for j in range(n):
             if i == j:
                 continue
-            xj = field(xs[j])
-            Li *= (x_poly + UnivariatePolynomial([-int(xj)], field))
+            if isinstance(xs[j],int):
+                xj = field(xs[j]%p)
+            else:
+                xj=xs[j]
+            Li *= (x_poly - UnivariatePolynomial([xj], field))
             denom *= (xi - xj)
         scale = yi / denom
-        term = Li * UnivariatePolynomial([int(scale)], field)
+        term = Li * UnivariatePolynomial([scale], field)
         P += term
     return P
 
 def lagrange_interpolate_bivariate(points: list[tuple[int, UnivariatePolynomial]],
                                    field: type[galois.FieldArray]) -> BivariatePolynomial:
+    p=field.characteristic
     n = len(points)
     assert n > 0, "Need at least one (x, UnivariatePolynomial) pair"
     xs, polys_y = zip(*points)
@@ -37,23 +48,29 @@ def lagrange_interpolate_bivariate(points: list[tuple[int, UnivariatePolynomial]
         raise ValueError("All x_i must be distinct")
     field = polys_y[0].field
     deg_y = polys_y[0].degree
-    for p in polys_y:
-        if p.field is not field:
+    for poly in polys_y:
+        if poly.field is not field:
             raise ValueError("All univariates must be over the same field")
-        if p.degree != deg_y:
+        if poly.degree != deg_y:
             raise ValueError("All univariates must have the same y-degree")
     x_poly = UnivariatePolynomial([0, 1], field)
     zero_bivar = BivariatePolynomial([[0] * (deg_y + 1)], field)
     A = zero_bivar
     for i in range(n):
-        xi = field(xs[i])
+        if isinstance(xs[i],int):
+            xi = field(xs[i]%p)
+        else:
+            xi=xs[i]
         Pi_y = polys_y[i]
         Li = UnivariatePolynomial([1], field)
         denom = field(1)
         for j in range(n):
             if i == j:
                 continue
-            xj = field(xs[j])
+            if isinstance(xs[j],int):
+                xj = field(xs[j]%p)
+            else:
+                xj = xs[j]
             Li *= (x_poly + UnivariatePolynomial([-int(xj)], field))
             denom *= (xi - xj)
         Li_scaled = Li * UnivariatePolynomial([int(field(1) / denom)], field)
@@ -67,6 +84,7 @@ def lagrange_interpolate_bivariate(points: list[tuple[int, UnivariatePolynomial]
 
 def lagrange_interpolate_trivariate(points: list[tuple[int, BivariatePolynomial]],
                                     field: type[galois.FieldArray]) -> TrivariatePolynomial:
+    p=field.characteristic
     n = len(points)
     assert n > 0, "Need at least one (z, BivariatePolynomial) pair"
     zs, bivariates = zip(*points)
@@ -84,14 +102,20 @@ def lagrange_interpolate_trivariate(points: list[tuple[int, BivariatePolynomial]
     zero_trivar = TrivariatePolynomial([[[0] * (deg_y + 1)] * (deg_x + 1)], field)
     T = zero_trivar
     for i in range(n):
-        zi = field(zs[i])
+        if isinstance(zs[i],int):
+            zi = field(zs[i]%p)
+        else:
+            zi = zs[i]
         Bi_xy = bivariates[i]
         Li = UnivariatePolynomial([1], field)
         denom = field(1)
         for j in range(n):
             if i == j:
                 continue
-            zj = field(zs[j])
+            if isinstance(zs[j],int):
+                zj = field(zs[j]%p)
+            else:
+                zj = zs[j]
             Li *= (z_poly + UnivariatePolynomial([-int(zj)], field))
             denom *= (zi - zj)
 
@@ -109,6 +133,7 @@ def lagrange_interpolate_trivariate(points: list[tuple[int, BivariatePolynomial]
 
 def interpolate_trivariate_from_grid(values_3d: list[list[list[int]]],
                                      field: type[galois.FieldArray]) -> TrivariatePolynomial:
+    p=field.characteristic
     n = len(values_3d) - 1
     assert n >= 0
     assert all(len(values_3d[x]) == n + 1 for x in range(n + 1))

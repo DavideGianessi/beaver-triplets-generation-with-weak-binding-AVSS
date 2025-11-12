@@ -17,13 +17,14 @@ class BivariatePolynomial:
 
         # Convert to field elements
         self.coeffs = [
-            [field(c) for c in row]
+            [field(c%self.field.characteristic) if isinstance(c,int) else c for c in row]
             for row in coeffs
         ]
 
     # ---------------- Univariate extraction ----------------
     def univariate_in_x(self, y_value) -> UnivariatePolynomial:
-        y_value = self.field(y_value)
+        if isinstance(y_value,int):
+            y_value = self.field(y_value%self.field.characteristic)
         coeffs_x = []
         for i in range(self.degree_x + 1):
             acc = self.field(0)
@@ -33,7 +34,8 @@ class BivariatePolynomial:
         return UnivariatePolynomial(coeffs_x, self.field)
 
     def univariate_in_y(self, x_value) -> UnivariatePolynomial:
-        x_value = self.field(x_value)
+        if isinstance(x_value,int):
+            x_value = self.field(x_value%self.field.characteristic)
         coeffs_y = []
         for j in range(self.degree_y + 1):
             acc = self.field(0)
@@ -44,8 +46,10 @@ class BivariatePolynomial:
 
     # ---------------- Evaluation ----------------
     def __call__(self, x, y):
-        x = self.field(x)
-        y = self.field(y)
+        if isinstance(x,int):
+            x = self.field(x%self.field.characteristic)
+        if isinstance(y,int):
+            y = self.field(y%self.field.characteristic)
         result = self.field(0)
         for i in range(self.degree_x + 1):
             for j in range(self.degree_y + 1):
@@ -84,8 +88,8 @@ class BivariatePolynomial:
         return BivariatePolynomial([[int(c) for c in row] for row in new_coeffs], self.field)
 
     def __mul__(self, scalar):
-        if isinstance(scalar, (int, np.integer)):
-            scalar = self.field(scalar)
+        if isinstance(scalar, int):
+            scalar = self.field(scalar%self.field.characteristic)
             new_coeffs = [
                 [c * scalar for c in row]
                 for row in self.coeffs
@@ -121,7 +125,7 @@ class BivariatePolynomial:
         """
         Serialize coefficients in row-major order (x-major, then y).
         """
-        itemsize = self.field(0).dtype.itemsize
+        itemsize = (self.field.characteristic.bit_length()+7)//8
         return b"".join(
             int(self.coeffs[i][j]).to_bytes(itemsize, "little")
             for i in range(self.degree_x + 1)
@@ -133,7 +137,7 @@ class BivariatePolynomial:
         """
         Deserialize from bytes (little-endian integer encoding).
         """
-        itemsize = field(0).dtype.itemsize
+        itemsize = (field.characteristic.bit_length()+7)//8
         coeffs = []
         offset = 0
         for i in range(degree_x + 1):
@@ -147,4 +151,5 @@ class BivariatePolynomial:
 
     @staticmethod
     def get_size(degree_x: int, degree_y: int, field: type[galois.FieldArray]) -> int:
-        return (degree_x + 1) * (degree_y + 1) * field(0).dtype.itemsize
+        itemsize = (field.characteristic.bit_length()+7)//8
+        return (degree_x + 1) * (degree_y + 1) * itemsize

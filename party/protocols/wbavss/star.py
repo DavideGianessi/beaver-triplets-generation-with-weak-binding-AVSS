@@ -92,8 +92,8 @@ def find_maximum_matching(graph,N):
             M.add((i,match[i]))
     return S,M
 
-def find_triangle_heads(graph,S,M):
-    compl=complement_graph(graph)
+def find_triangle_heads(graph,S,M,N):
+    compl=complement_graph(graph,N)
     T=set()
     for edge in M:
         for i in S:
@@ -106,13 +106,13 @@ def find_triangle_heads(graph,S,M):
 def find_star(graph,N,t):
     complement = complement_graph(graph,N)
     S,M = find_maximum_matching(complement,N)
-    T = find_triangle_heads(graph,S,M)
+    T = find_triangle_heads(graph,S,M,N)
     C = set([i for i in range(1,N+1) if i not in S.union(T)])
     D = set()
     for i in range(1,N+1):
         if all([graph[i][i2]==1 or i==i2 for i2 in C]):
             D.add(i)
-    if len(C)>=2*t+1 and C.issubset(D) and len(D)>=3*t+1:
+    if len(C)>=N-2*t and C.issubset(D) and len(D)>=N-t:
         return C,D
     else:
         return False

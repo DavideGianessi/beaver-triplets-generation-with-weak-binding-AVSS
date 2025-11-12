@@ -8,8 +8,11 @@ from util.logging import log
 
 GF = galois.GF(p)
 
+def gf_size(field):
+    return (field.characteristic.bit_length() + 7) // 8
+
 def gf_to_bytes(elem,field=GF):
-    return int(elem).to_bytes(field(0).dtype.itemsize, "little")
+    return int(elem).to_bytes(gf_size(field), "little")
 
 def bytes_to_gf(b,field=GF):
     return field(int.from_bytes(b,"little"))
@@ -40,12 +43,12 @@ class PackedVSS(BaseProtocol):
                 }}}
         if message=="exchange":
             return {"type": "list", "len": params["batching"], "items": {"type":"dict", "keys": {
-                "fxi": {"type": "bytes", "len": GF(0).dtype.itemsize },
-                "fyi": {"type": "bytes", "len": GF(0).dtype.itemsize },
+                "fxi": {"type": "bytes", "len": gf_size(GF) },
+                "fyi": {"type": "bytes", "len": gf_size(GF) },
                 }}}
         if message=="reconstruct":
             return {"type": "list", "len": params["batching"], "items": 
-                    {"type": "bytes", "len": GF(0).dtype.itemsize },
+                    {"type": "bytes", "len": gf_size(GF) },
                 }
         return None
 
@@ -58,7 +61,7 @@ class PackedVSS(BaseProtocol):
                 for s in self.share:
                     exch.append({"fxi": gf_to_bytes(s["fx"](i)),"fyi": gf_to_bytes(s["fy"](i))})
                     clearexch.append({"fxi": s["fx"](i),"fyi": s["fy"](i)})
-                log(f"exchanging {clearexch} with {i}")
+                #log(f"exchanging {clearexch} with {i}")
                 self.send_message(i,"exchange",exch)
 
 
@@ -110,13 +113,13 @@ class PackedVSS(BaseProtocol):
                 share=data
                 self.share=[{"fx":UnivariatePolynomial.from_bytes(s["fx"],GF,t+t//2),"fy":UnivariatePolynomial.from_bytes(s["fy"],GF,t)} for s in share]
                 self.send_share_checks()
-                log(f"share:{self.share}")
+                #log(f"share:{self.share}")
         elif message=="reconstruct":
             self.reconstructions[by]=[ bytes_to_gf(d) for d in data]
         elif message=="exchange":
             data=[{"fxi": bytes_to_gf(d["fxi"]),"fyi": bytes_to_gf(d["fyi"])} for d in data]
             self.exchanges[by]=data
-            log(f"received exchange {data} from {by}")
+            #log(f"received exchange {data} from {by}")
             self.others[by]=data
         if self.share and self.exchanges:
             for index,exch in self.exchanges.items():
@@ -138,15 +141,17 @@ class PackedVSS(BaseProtocol):
             self.graph[i][i2]+=1
             self.graph[i2][i]+=1
             if self.graph[i][i2]==2:
-                log(f"new edge ({i},{i2})")
+                pass
+                #log(f"new edge ({i},{i2})")
         else:
             self.star=[set(result["C"]),set(result["D"]),set(result["G"]),set(result["F"])]
-            log(f"star: {self.star}")
+            #log(f"star: {self.star}")
         if PARTY_ID==self.dealer:
-            log(f"graph: {self.graph}")
+            pass
+            #log(f"graph: {self.graph}")
         if not self.foundstar and self.dealer == PARTY_ID:
             star = find_star(self.graph)
-            log(f"star?? {star}")
+            #log(f"star?? {star}")
             if star:
                 C,D,G,F=star
                 C,D,G,F=list(C),list(D),list(G),list(F)

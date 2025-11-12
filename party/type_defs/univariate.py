@@ -1,5 +1,4 @@
 import galois
-import numpy as np
 
 class UnivariatePolynomial:
     def __init__(self, coeffs: list[int], field: type[galois.FieldArray]):
@@ -7,12 +6,13 @@ class UnivariatePolynomial:
         coeffs: array of coefficients, lowest degree first
         field: Galois field
         """
-        self.coeffs = [field(c) for c in coeffs]
-        self.degree = len(coeffs) - 1
         self.field = field
+        self.coeffs = [field(c%self.field.characteristic) if isinstance(c,int) else c for c in coeffs]
+        self.degree = len(coeffs) - 1
 
     def __call__(self, x):
-        x = self.field(x)
+        if isinstance(x,int):
+            x = self.field(x%self.field.characteristic)
         result = self.field(0)
         for i, c in enumerate(self.coeffs):
             result += c * x**i
@@ -43,17 +43,18 @@ class UnivariatePolynomial:
 
     def __mul__(self, other):
         if isinstance(other, (int, self.field)):
-            new_coeffs = [c * self.field(other) for c in self.coeffs]
+            if isinstance(other,int):
+                other=self.field(other%self.field.characteristic)
+            new_coeffs = [c * other for c in self.coeffs]
             return UnivariatePolynomial(new_coeffs, self.field)
         if isinstance(other, UnivariatePolynomial):
             if self.field is not other.field:
                 raise TypeError("Polynomials must be over the same field")
             deg = self.degree + other.degree
-            coeffs = [self.field(0)] * (deg + 1)
+            coeffs = [self.field(0) for _ in range(deg+1)]
             for i, a in enumerate(self.coeffs):
                 for j, b in enumerate(other.coeffs):
                     coeffs[i + j] += a * b
-            coeffs = [int(c) for c in coeffs]
             return UnivariatePolynomial(coeffs, self.field)
         return NotImplemented
 
@@ -85,14 +86,16 @@ class UnivariatePolynomial:
         return UnivariatePolynomial(new_coeffs, self.field)
 
     def to_bytes(self) -> bytes:
-        return b"".join(int(c).to_bytes(self.field(0).dtype.itemsize, "little") for c in self.coeffs)
+        n_bytes = (self.field.characteristic.bit_length() + 7) // 8
+        return b"".join(int(c).to_bytes(n_bytes, "little") for c in self.coeffs)
 
     @classmethod
     def from_bytes(cls, b: bytes, field: type[galois.FieldArray], degree: int):
-        itemsize= field(0).dtype.itemsize
+        itemsize= (field.characteristic.bit_length() + 7) // 8
         coeffs = [int.from_bytes(b[i*itemsize:(i+1)*itemsize], "little") for i in range(degree + 1)]
         return cls(coeffs, field)
 
     @staticmethod
     def get_size(degree: int, field : type[galois.FieldArray]) -> int:
-        return (degree+1)*field(0).dtype.itemsize
+        n_bytes = (field.characteristic.bit_length() + 7) // 8
+        return (degree+1)*n_bytes

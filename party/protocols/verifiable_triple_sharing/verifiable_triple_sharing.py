@@ -16,7 +16,7 @@ def rand_element(GF):
 
 triples_per_instance=(t//2+1)**2
 verification_batching=ceil(amount/triples_per_instance)
-sharing_batching=verification_batches*3*(t//2+1)
+sharing_batching=verification_batching*3*(t//2+1)
 real_amount=verification_batching*triples_per_instance
 
 def lift_to_bivariate(U: UnivariatePolynomial, deg_y: int, field: type[galois.FieldArray]):
@@ -29,7 +29,7 @@ def lift_to_bivariate(U: UnivariatePolynomial, deg_y: int, field: type[galois.Fi
         coeffs.append(row)
     return BivariatePolynomial(coeffs, field)
 
-class Main(BaseProtocol):
+class TripleSharing(BaseProtocol):
     @staticmethod
     def get_messages():
         return []
@@ -44,10 +44,12 @@ class Main(BaseProtocol):
 
     def __init__(self, manager, path, params):
         super().__init__(manager, path)
+        self.wbavssdone=False
+        self.packeddone=False
         if PARTY_ID==3:
             self.beaver_a = [rand_element(GF) for _ in range(real_amount)]
             self.beaver_b = [rand_element(GF) for _ in range(real_amount)]
-            self.beaver_c = [beaver_a[i]*beaver_b[i] for i in range(real_amount)]
+            self.beaver_c = [self.beaver_a[i]*self.beaver_b[i] for i in range(real_amount)]
             As=[]
             Bs=[]
             Cs=[]
@@ -66,6 +68,11 @@ class Main(BaseProtocol):
                 As.append(lift_to_bivariate(lagrange_interpolate_univariate(pointsA,GF),t,GF))
                 Bs.append(lift_to_bivariate(lagrange_interpolate_univariate(pointsB,GF),t,GF))
                 Cs.append(lift_to_bivariate(lagrange_interpolate_univariate(pointsC,GF),t,GF))
+                unipoly=lagrange_interpolate_univariate(pointsA,GF)
+                for beta in range(t//2+1):
+                    assert(unipoly(-beta)==self.beaver_a[block+beta])
+                    #assert(As[-1](-beta,0)==self.beaver_a[block+beta])
+
             self.start_subprotocol(f"packed_vss_0",params={"dealer":3,"batching":sharing_batching,"input":As+Bs+Cs})
             Ses=[]
             for block in range(0,len(As),t//2+1):
@@ -75,15 +82,15 @@ class Main(BaseProtocol):
                 S4points=[[[rand_element(GF) for z in range(t+t//2+1)] for y in range(t+t//2+1)] for z in range(t+t//2+1)]
                 for u in range(t//2+1):
                     for beta in range(t//2+1):
-                        thisA=As[block+u].univariate_in_x(-beta)
-                        thisB=Bs[block+u].univariate_in_x(-beta)
-                        thisC=Cs[block+u].univariate_in_x(-beta)
-                        thisE=thisA*ThisB-thisC
+                        thisA=As[block+u].univariate_in_y(-beta)
+                        thisB=Bs[block+u].univariate_in_y(-beta)
+                        thisC=Cs[block+u].univariate_in_y(-beta)
+                        thisE=thisA*thisB-thisC
                         for k in range(1,t//2+1):
-                            s1points[beta,k,u]=thisE.coeff[k]
-                            s2points[beta,k,u]=thisE.coeff[t//2+k]
-                            s3points[beta,k,u]=thisE.coeff[t+k]
-                            s4points[beta,k,u]=thisE.coeff[t+t//2+k]
+                            S1points[beta][k][u]=thisE.coeffs[k]
+                            S2points[beta][k][u]=thisE.coeffs[t//2+k]
+                            S3points[beta][k][u]=thisE.coeffs[t+k]
+                            S4points[beta][k][u]=thisE.coeffs[t+t//2+k]
                 S1=interpolate_trivariate_from_grid(S1points,GF)
                 S2=interpolate_trivariate_from_grid(S2points,GF)
                 S3=interpolate_trivariate_from_grid(S3points,GF)
@@ -106,17 +113,39 @@ class Main(BaseProtocol):
             self.a_shares=[]
             self.b_shares=[]
             self.c_shares=[]
-            for u in range(blocksize):
+            for i in range(blocksize):
                 for beta in range(t//2+1):
-                    self.a_shares.append(Aa[u](-beta))
-                    self.b_shares.append(Ba[u](-beta))
-                    self.c_shares.append(Ca[u](-beta))
+                    self.a_shares.append(As[i](-beta))
+                    self.b_shares.append(Bs[i](-beta))
+                    self.c_shares.append(Cs[i](-beta))
             ext_a=[]
             ext_b=[]
             ext_c=[]
             for inst in range(0,len(self.a_shares),(t//2+1)**2):
-                for
+                this_a=[]
+                this_b=[]
+                this_c=[]
+                for u in range(0,(t//2+1)**2,t//2+1):
+                    row_a=[]
+                    row_b=[]
+                    row_c=[]
+                    for beta in range(t//2+1):
+                        row_a.append(self.a_shares[inst+u+beta])
+                        row_b.append(self.b_shares[inst+u+beta])
+                        row_c.append(self.c_shares[inst+u+beta])
+                    this_a.append(row_a)
+                    this_b.append(row_b)
+                    this_c.append(row_c)
+                ext_a.append(this_a)
+                ext_b.append(this_b)
+                ext_c.append(this_c)
             if PARTY_ID!=3:
                 self.start_subprotocol(f"wbavss_0",params={"dealer":3,"batching":verification_batching,"externalA":ext_a,"externalB":ext_b,"externalC":ext_c})
+            if PARTY_ID==3:
+                self.packeddone=True
+                if self.wbavssdone:
+                    self.return_result([self.a_shares,self.b_shares,self.c_shares])
         if subprotocol=="wbavss":
-            self.return_result([self.a_shares,self.b_shares,self.c_shares])
+            self.wbavssdone=True
+            if PARTY_ID!=3 or self.packeddone:
+                self.return_result([self.a_shares,self.b_shares,self.c_shares])

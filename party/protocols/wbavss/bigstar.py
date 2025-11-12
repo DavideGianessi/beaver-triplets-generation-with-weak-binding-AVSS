@@ -23,7 +23,7 @@ def find_dense_or_bigstar(graph):
             C.add(i)
     if len(C)>=N-t:
         return "dense",C,set()
-    C_inv=set([i for i im range(1,N+1) if i not in C])
+    C_inv=set([i for i in range(1,N+1) if i not in C])
     for i in C_inv:
         GAMMA_SET=set([j for j in range(1,N+1) if graph[i][j] or i==j])
         addme=1

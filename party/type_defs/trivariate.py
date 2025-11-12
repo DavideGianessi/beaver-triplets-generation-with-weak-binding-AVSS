@@ -21,7 +21,7 @@ class TrivariatePolynomial:
         # Convert to field elements
         self.coeffs = [
             [
-                [field(c) for c in row_z]
+                [field(c%self.field.characteristic) if isinstance(c,int) else c for c in row_z]
                 for row_z in row_y
             ]
             for row_y in coeffs
@@ -29,7 +29,8 @@ class TrivariatePolynomial:
 
     # ---------------- Bivariate extraction ----------------
     def bivariate_in_xy(self, z_value) -> BivariatePolynomial:
-        z_value = self.field(z_value)
+        if isinstance(z_value,int):
+            z_value = self.field(z_value%self.field.characteristic)
         coeffs_xy = []
         for i in range(self.degree_x + 1):
             row_xy = []
@@ -42,7 +43,8 @@ class TrivariatePolynomial:
         return BivariatePolynomial(coeffs_xy, self.field)
 
     def bivariate_in_xz(self, y_value) -> BivariatePolynomial:
-        y_value = self.field(y_value)
+        if isinstance(y_value,int):
+            y_value = self.field(y_value%self.field.characteristic)
         coeffs_xz = []
         for i in range(self.degree_x + 1):
             row_xz = []
@@ -55,7 +57,8 @@ class TrivariatePolynomial:
         return BivariatePolynomial(coeffs_xz, self.field)
 
     def bivariate_in_yz(self, x_value) -> BivariatePolynomial:
-        x_value = self.field(x_value)
+        if isinstance(x_value,int):
+            x_value = self.field(x_value%self.field.characteristic)
         coeffs_yz = []
         for j in range(self.degree_y + 1):
             row_yz = []
@@ -69,9 +72,12 @@ class TrivariatePolynomial:
 
     # ---------------- Evaluation ----------------
     def __call__(self, x, y, z):
-        x = self.field(x)
-        y = self.field(y)
-        z = self.field(z)
+        if isinstance(x,int):
+            x = self.field(x%self.field.characteristic)
+        if isinstance(y,int):
+            y = self.field(y%self.field.characteristic)
+        if isinstance(z,int):
+            z = self.field(z%self.field.characteristic)
         result = self.field(0)
         for i in range(self.degree_x + 1):
             for j in range(self.degree_y + 1):
@@ -132,7 +138,7 @@ class TrivariatePolynomial:
         """
         Serialize coefficients in row-major order (x-major, then y, then z).
         """
-        itemsize = self.field(0).dtype.itemsize
+        itemsize= (self.field.characteristic.bit_length() + 7) // 8
         return b"".join(
             int(self.coeffs[i][j][k]).to_bytes(itemsize, "little")
             for i in range(self.degree_x + 1)
@@ -146,7 +152,7 @@ class TrivariatePolynomial:
         """
         Deserialize from bytes (little-endian integer encoding).
         """
-        itemsize = field(0).dtype.itemsize
+        itemsize= (field.characteristic.bit_length() + 7) // 8
         coeffs = []
         offset = 0
         for i in range(degree_x + 1):
@@ -163,4 +169,5 @@ class TrivariatePolynomial:
 
     @staticmethod
     def get_size(degree_x: int, degree_y: int, degree_z: int, field: type[galois.FieldArray]) -> int:
-        return (degree_x + 1) * (degree_y + 1) * (degree_z + 1) * field(0).dtype.itemsize
+        itemsize= (field.characteristic.bit_length() + 7) // 8
+        return (degree_x + 1) * (degree_y + 1) * (degree_z + 1) * itemsize

@@ -2,43 +2,47 @@ from config import PARTY_ID,N,t,p
 import galois
 from protocols.baseProtocol import BaseProtocol
 from type_defs import TrivariatePolynomial,BivariatePolynomial,UnivariatePolynomial
-from .bigstar import find_star,verify_star
+from .bigstar import find_dense_or_bigstar,verify_dense_or_bigstar
 from .external_validity import external_validity
 from .linear_circuit import linear_to_bivariate,linear_to_univariate
 from util.logging import log
 
 GF = galois.GF(p)
 
-def check_my_share(share)
+def check_my_share(share):
     for s in share:
         exch=[]
         tLiQi=UnivariatePolynomial([0],GF)
         for j in range(0,12,3):
-            exch.append(s[j].univariate_in_y(PARTY_ID))
             exch.append(s[j].univariate_in_x(PARTY_ID))
-            exch.append(s[j+1].univariate_in_y(PARTY_ID))
+            exch.append(s[j].univariate_in_y(PARTY_ID))
             exch.append(s[j+1].univariate_in_x(PARTY_ID))
-            exch.append(s[j+2].univariate_in_y(PARTY_ID))
+            exch.append(s[j+1].univariate_in_y(PARTY_ID))
             exch.append(s[j+2].univariate_in_x(PARTY_ID))
-            tLiQi+= pow(PARTY_ID,j*(t//2),p) * linear_to_univariate(PARTY_ID,s[j],GF)
+            exch.append(s[j+2].univariate_in_y(PARTY_ID))
+            tLiQi+= pow(PARTY_ID,(j//3)*(t//2),p) * linear_to_univariate(PARTY_ID,s[j],GF)
         exch.append(tLiQi)
         if not consistent(PARTY_ID,s,exch):
             return False
     return True
 
 def consistent(j,share,exch):
+    #log(f"comparing----\n{share=}\n{exch=}\n")
     T=share[12]
     for r in range(4):
         Q,W,R=share[r*3:(r+1)*3]
-        if exch[r*6]!=W.univariate_in_y(j) or
-            exch[r*6+1]!=R.univariate_in_y(j) or
-            exch[r*6+2]!=Q.univariate_in_y(j) or
-            exch[r*6+3]!=R.univariate_in_x(j) or
-            exch[r*6+4]!=Q.univariate_in_x(j) or
-            exch[r*6+5]!=W.univariate_in_x(j) or
+        if (exch[r*6]!=W.univariate_in_x(j) or
+            exch[r*6+1]!=R.univariate_in_x(j) or
+            exch[r*6+2]!=Q.univariate_in_x(j) or
+            exch[r*6+3]!=R.univariate_in_y(j) or
+            exch[r*6+4]!=Q.univariate_in_y(j) or
+            exch[r*6+5]!=W.univariate_in_y(j)):
+            #log("failed linearity checks ########")
             return False
     if exch[24]!=T.univariate_in_x(j):
+        #log("failed circuit check ########")
         return False
+    #log("success ########")
     return True
             
 
@@ -50,7 +54,7 @@ class WBAVSS(BaseProtocol):
     @staticmethod
     def get_subprotocols(params):
         bigstar_schema= {"type":"dict","keys": {
-            "kind": {"type": "str", "regex": r"dense|bigstar"}
+            "kind": {"type": "str", "regex": r"dense|bigstar"},
             "C":{"type": "list", "maxlen":N, "items": {"type": "int", "min": 1, "max": N}},
             "D":{"type": "list", "maxlen":N, "items": {"type": "int", "min": 1, "max": N}},
           }}
@@ -83,13 +87,13 @@ class WBAVSS(BaseProtocol):
                     this_exch=[]
                     tLjQi=UnivariatePolynomial([0],GF)
                     for j in range(0,12,3):
-                        this_exch.append(s[j].univariate_in_y(i))
                         this_exch.append(s[j].univariate_in_x(i))
-                        this_exch.append(s[j+1].univariate_in_y(i))
+                        this_exch.append(s[j].univariate_in_y(i))
                         this_exch.append(s[j+1].univariate_in_x(i))
-                        this_exch.append(s[j+2].univariate_in_y(i))
+                        this_exch.append(s[j+1].univariate_in_y(i))
                         this_exch.append(s[j+2].univariate_in_x(i))
-                        tLjQi+= pow(i,j*(t//2),p) * linear_to_univariate(i,s[j],GF)
+                        this_exch.append(s[j+2].univariate_in_y(i))
+                        tLjQi+= pow(i,(j//3)*(t//2),p) * linear_to_univariate(i,s[j],GF)
                     this_exch.append(tLjQi)
                     exch.append(this_exch)
                 log(f"exchanging {exch} with {i}")
@@ -134,9 +138,9 @@ class WBAVSS(BaseProtocol):
                 for Ss in Ses:
                     this_share=[]
                     for S in Ss:
-                        this_share.append(S.bivariate_in_z(i).to_bytes())    # Qi(x,y)
-                        this_share.append(S.bivariate_in_y(i).to_bytes())    # Wi(x,z)
-                        this_share.append(S.bivariate_in_x(i).to_bytes())    # Ri(y,z)
+                        this_share.append(S.bivariate_in_xy(i).to_bytes())    # Qi(x,y)
+                        this_share.append(S.bivariate_in_xz(i).to_bytes())    # Wi(x,z)
+                        this_share.append(S.bivariate_in_yz(i).to_bytes())    # Ri(y,z)
                     this_share.append(linear_to_bivariate(i,Ss,GF).to_bytes()) # Ti(x,z)
                     share.append(this_share)
                 if i!=PARTY_ID:
@@ -152,6 +156,7 @@ class WBAVSS(BaseProtocol):
             if by == self.dealer:
                 share=data
                 share=[[BivariatePolynomial.from_bytes(s,GF,t+t//2,t+t//2) for s in ss] for ss in share]
+                log(f"{check_my_share(share)=}")
                 if all([external_validity(self.externalA[i],self.externalB[i],self.externalC[i],share[i][12],PARTY_ID,GF) for i in range(self.batching)]) and check_my_share(share):
                     self.share=share
                     self.send_share_checks()
@@ -188,7 +193,7 @@ class WBAVSS(BaseProtocol):
         if PARTY_ID==self.dealer:
             log(f"graph: {self.graph}")
         if not self.foundstar and self.dealer == PARTY_ID:
-            star = find_star(self.graph)
+            star = find_dense_or_bigstar(self.graph)
             log(f"star?? {star}")
             if star:
                 kind,C,D=star
@@ -200,7 +205,7 @@ class WBAVSS(BaseProtocol):
     def check_star(self):
         if self.star:
             C,D=self.star
-            if verify_star(self.graph,self.startype,C,D):
+            if verify_dense_or_bigstar(self.graph,self.startype,C,D):
                 self.return_result(True)
                 self.stop()
                 return

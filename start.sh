@@ -3,9 +3,12 @@ set -e
 
 N=${1:-5}
 
-MODULUS=170141183460469231731687303715884105727   #2^127-1
+#MODULUS=170141183460469231731687303715884105727   #2^127-1
+MODULUS=53
 
 PROTOCOL=${2:-test}
+
+AMOUNT=${3:-1}
 
 mkdir -p ./outputs
 
@@ -37,6 +40,7 @@ for i in $(seq 1 $N ); do
       - ROUTER_HOST=router
       - MAIN=$PROTOCOL
       - GRACE_PERIOD=3
+      - AMOUNT=$AMOUNT
     networks:
       mpcnet:
         ipv4_address: 172.20.$((ip / 256)).$((ip % 256))

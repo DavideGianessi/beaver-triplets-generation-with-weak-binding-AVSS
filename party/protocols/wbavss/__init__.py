@@ -1,1 +1,1 @@
-from .packed_vss import PackedVSS
+from .wbavss import WBAVSS
