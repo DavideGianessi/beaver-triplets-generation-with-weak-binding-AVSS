@@ -5,7 +5,7 @@ import select
 import os
 
 # --- Config ---
-N_PARTIES = int(os.environ.get("N_PARTIES", 41))
+N_PARTIES = int(os.environ.get("N_PARTIES", 9))
 ROUTER_HOST = "0.0.0.0"
 ROUTER_PORT = 9000
 
@@ -17,6 +17,13 @@ if os.path.exists(log_path):
         os.remove(log_path)
     except OSError as e:
         print(f"Error deleting old log file {path}: {e}")
+
+traffic_log_path = os.path.join(OUTPUT_FOLDER, "traffic_per_message.log")
+if os.path.exists(traffic_log_path):
+    try:
+        os.remove(traffic_log_path)
+    except OSError as e:
+        print(f"Error deleting old traffic log file {traffic_log_path}: {e}")
 
 # --- Helpers for encoding/decoding ---
 def encode_message(msg: dict) -> bytes:
@@ -41,6 +48,11 @@ def decode_message(sock: socket.socket) -> dict:
 def log(*args):
     with open(log_path, "a") as f:
         print(*args, file=f)
+
+def log_traffic(messageid, from_party, to_party, byte_size):
+    """Log del traffico per ogni messaggio"""
+    with open(traffic_log_path, "a") as f:
+        print(f"{messageid}\t{from_party}\t{to_party}\t{byte_size}", file=f)
 
 # --- Router main ---
 def main():
@@ -80,7 +92,17 @@ def main():
 
             else:
                 try:
-                    msg = decode_message(sock)
+                    raw_len = recv_exact(sock, 4)
+                    (length,) = struct.unpack("!I", raw_len)
+                    raw_data = recv_exact(sock, length)
+                    total_received_size = 4 + length
+                    #msg = decode_message(sock)
+                    msg = msgpack.unpackb(raw_data, raw=False)
+                    messageid = msg.get("messageid", "unknown")
+                    from_party = msg.get("from", -1)
+                    to_party = msg.get("to", -1)
+
+                    log_traffic(messageid, from_party, to_party, total_received_size)
                 except Exception as e:
                     # Drop connection on error/disconnect
                     pid = next((pid for pid, cs in connections.items() if cs == sock), None)
@@ -95,7 +117,7 @@ def main():
                         return
                     continue
 
-                log(msg)
+                #log(msg)
 
                 dest = msg.get("to")
                 if dest in connections:

@@ -96,7 +96,7 @@ class WBAVSS(BaseProtocol):
                         tLjQi+= pow(i,(j//3)*(t//2),p) * linear_to_univariate(i,s[j],GF)
                     this_exch.append(tLjQi)
                     exch.append(this_exch)
-                log(f"exchanging {exch} with {i}")
+                #log(f"exchanging {exch} with {i}")
                 exch=[[univ.to_bytes() for univ in this_exch] for this_exch in exch]
                 self.send_message(i,"exchange",exch)
 
@@ -147,7 +147,7 @@ class WBAVSS(BaseProtocol):
                     self.send_message(i,"shares",share)
                 else:
                     self.share=[[BivariatePolynomial.from_bytes(s,GF,t+t//2,t+t//2) for s in ss] for ss in share]
-                    log(f"share:{self.share}")
+                    #log(f"share:{self.share}")
                     self.send_share_checks()
 
 
@@ -156,15 +156,15 @@ class WBAVSS(BaseProtocol):
             if by == self.dealer:
                 share=data
                 share=[[BivariatePolynomial.from_bytes(s,GF,t+t//2,t+t//2) for s in ss] for ss in share]
-                log(f"{check_my_share(share)=}")
+                #log(f"{check_my_share(share)=}")
                 if all([external_validity(self.externalA[i],self.externalB[i],self.externalC[i],share[i][12],PARTY_ID,GF) for i in range(self.batching)]) and check_my_share(share):
                     self.share=share
                     self.send_share_checks()
-                    log(f"share:{self.share}")
+                    #log(f"share:{self.share}")
         elif message=="exchange":
             data=[[UnivariatePolynomial.from_bytes(d,GF,t+t//2) for d in dd] for dd in data]
             self.exchanges[by]=data
-            log(f"received exchange {data} from {by}")
+            #log(f"received exchange {data} from {by}")
         if self.share and self.exchanges:
             for index,exch in self.exchanges.items():
                 correct=True
@@ -184,17 +184,19 @@ class WBAVSS(BaseProtocol):
             self.graph[i][i2]+=1
             self.graph[i2][i]+=1
             if self.graph[i][i2]==2:
-                log(f"new edge ({i},{i2})")
+                #log(f"new edge ({i},{i2})")
+                pass
         else:
             self.startype=result["kind"]
             self.star=[set(result["C"]),set(result["D"])]
-            log(f"startype: {self.startype}")
-            log(f"star: {self.star}")
+            #log(f"startype: {self.startype}")
+            #log(f"star: {self.star}")
         if PARTY_ID==self.dealer:
-            log(f"graph: {self.graph}")
+            #log(f"graph: {self.graph}")
+            pass
         if not self.foundstar and self.dealer == PARTY_ID:
             star = find_dense_or_bigstar(self.graph)
-            log(f"star?? {star}")
+            #log(f"star?? {star}")
             if star:
                 kind,C,D=star
                 C,D=list(C),list(D)

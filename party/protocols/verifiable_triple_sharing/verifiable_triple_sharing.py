@@ -104,7 +104,7 @@ class TripleSharing(BaseProtocol):
         pass
 
     def handle_subprotocol(self, subprotocol, index, result):
-        print(f"subprotocol {subprotocol}_{index} returned with result:{result}")
+        print(f"subprotocol {subprotocol}_{index} returned")
         if subprotocol=="packed_vss":
             blocksize=len(result)//3
             As=[r["fx"] for r in result[:blocksize]]
@@ -148,4 +148,5 @@ class TripleSharing(BaseProtocol):
         if subprotocol=="wbavss":
             self.wbavssdone=True
             if PARTY_ID!=3 or self.packeddone:
-                self.return_result([self.a_shares,self.b_shares,self.c_shares])
+                #self.return_result([self.a_shares,self.b_shares,self.c_shares])
+                self.return_result(real_amount)
