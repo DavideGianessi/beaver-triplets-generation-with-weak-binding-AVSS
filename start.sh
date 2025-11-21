@@ -14,17 +14,18 @@ mkdir -p ./outputs
 
 cat > docker-compose.yml <<EOF
 services:
-  router:
-    build: ./router
-    container_name: router
-    environment:
-      - N_PARTIES=$N
-    networks:
-      mpcnet:
-        ipv4_address: 172.20.0.9
-    volumes:
-      - ./outputs:/outputs
+#  router:
+#    build: ./router
+#    container_name: router
+#    environment:
+#      - N_PARTIES=$N
+#    networks:
+#      mpcnet:
+#        ipv4_address: 172.20.0.9
+#    volumes:
+#      - ./outputs:/outputs
 EOF
+
 
 for i in $(seq 1 $N ); do
   ip=$((10 + i))
@@ -39,7 +40,7 @@ for i in $(seq 1 $N ); do
       - MODULUS=$MODULUS
       - ROUTER_HOST=router
       - MAIN=$PROTOCOL
-      - GRACE_PERIOD=3
+      - GRACE_PERIOD=20
       - AMOUNT=$AMOUNT
     networks:
       mpcnet:

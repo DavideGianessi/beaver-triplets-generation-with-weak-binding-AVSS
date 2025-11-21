@@ -1,6 +1,8 @@
 import re
 
 def validate(value, schema):
+    if not schema:
+        return False
     t = schema.get("type")
 
     # --- ints ---

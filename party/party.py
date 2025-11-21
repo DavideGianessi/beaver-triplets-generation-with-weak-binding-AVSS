@@ -12,8 +12,8 @@ def handle_messages(manager):
         manager.dispatch(msg)
 
 def main():
-    networking.connect_to_router()
-    time.sleep(3)
+    networking.start_network()
+    time.sleep(20)
     manager = ProtocolManager(f"/{MAIN}_0/")
     manager.start_protocol(f"/{MAIN}_0/")
     while not manager.is_done():
