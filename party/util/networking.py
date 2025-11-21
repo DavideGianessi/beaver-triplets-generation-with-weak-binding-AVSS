@@ -3,11 +3,11 @@ import msgpack
 import struct
 from queue import Queue
 from threading import Thread
-from config import PARTY_ID,N
+from config import PARTY_ID,N,BASE_PORT
 from util.logging import log_traffic
 import time
 
-PORT=5000
+PORT=BASE_PORT+PARTY_ID
 
 _inbox = Queue()
 _connections = {}
@@ -62,7 +62,7 @@ def start_network():
     # Start server socket
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_sock.bind(("0.0.0.0", PORT))
+    server_sock.bind(("127.0.0.1", PORT))
     server_sock.listen()
     Thread(target=_accept_loop, args=(server_sock,), daemon=True).start()
 
@@ -70,11 +70,12 @@ def start_network():
 
     # Outgoing connections: connect to parties with smaller IDs
     for other in range(1, PARTY_ID):
-        host = f"party{other}"
+        host = f"127.0.0.1"
+        other_port = BASE_PORT + other
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect((host, PORT))
+                sock.connect((host, other_port))
                 _connections[other] = sock
                 Thread(target=_reader, args=(sock,), daemon=True).start()
                 handshake = {

@@ -104,7 +104,7 @@ class TripleSharing(BaseProtocol):
         pass
 
     def handle_subprotocol(self, subprotocol, index, result):
-        print(f"subprotocol {subprotocol}_{index} returned")
+        print(f"|{PARTY_ID}|subprotocol {subprotocol}_{index} returned")
         if subprotocol=="packed_vss":
             blocksize=len(result)//3
             As=[r["fx"] for r in result[:blocksize]]

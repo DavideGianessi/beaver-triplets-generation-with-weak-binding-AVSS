@@ -14,50 +14,18 @@ mkdir -p ./outputs
 
 cat > docker-compose.yml <<EOF
 services:
-#  router:
-#    build: ./router
-#    container_name: router
-#    environment:
-#      - N_PARTIES=$N
-#    networks:
-#      mpcnet:
-#        ipv4_address: 172.20.0.9
-#    volumes:
-#      - ./outputs:/outputs
-EOF
-
-
-for i in $(seq 1 $N ); do
-  ip=$((10 + i))
-  cat >> docker-compose.yml <<EOF
-
-  party$i:
+  mpc:
     build: ./party
-    container_name: party$i
+    container_name: mpc
     environment:
-      - PARTY_ID=$i
       - N_PARTIES=$N
       - MODULUS=$MODULUS
-      - ROUTER_HOST=router
       - MAIN=$PROTOCOL
       - GRACE_PERIOD=20
       - AMOUNT=$AMOUNT
-    networks:
-      mpcnet:
-        ipv4_address: 172.20.$((ip / 256)).$((ip % 256))
+      - BASE_PORT=5000
     volumes:
       - ./outputs:/outputs
-EOF
-done
-
-cat >> docker-compose.yml <<EOF
-
-networks:
-  mpcnet:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 EOF
 
 echo "[*] Generated docker-compose.yml with $N parties."
