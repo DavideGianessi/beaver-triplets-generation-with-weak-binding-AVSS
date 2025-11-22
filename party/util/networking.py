@@ -128,8 +128,10 @@ def decode_id(myid):
     messages=["","shares","exchange","reconstruct","init","echo","ready"]
     path="/"+messages[myid%10]
     myid=myid//10
-    if myid%100000:
-        path=f"/bracha_{(myid%100000)-1}"+path
+    if myid%100000==1:
+        path=f"/bracha_0"+path
+    elif myid%100000:
+        path=f"/bracha_lite_{(myid%100000)-1}"+path
     myid=myid//100000
     if myid==1:
         path=f"/packed_vss_0"+path

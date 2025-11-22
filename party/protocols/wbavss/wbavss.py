@@ -60,7 +60,7 @@ class WBAVSS(BaseProtocol):
           }}
         empty= {"type":"bytes","len":0}
         return {"bracha_0": {"speaker":params["dealer"],"content_schema": bigstar_schema}} | \
-            {f"bracha_{i*(N+1)+i2}": {"speaker":i,"content_schema": empty} for i in range(1,N+1) for i2 in range(1,N+1) if i!=i2}
+            {f"bracha_lite_{i*(N+1)+i2}": {"speaker":i} for i in range(1,N+1) for i2 in range(1,N+1) if i!=i2}
 
     @staticmethod
     def get_schema(message,by,params):
@@ -120,7 +120,7 @@ class WBAVSS(BaseProtocol):
             if i != PARTY_ID:
                 for i2 in range(1,N+1):
                     if i!=i2:
-                        self.start_subprotocol(f"bracha_{i*(N+1)+i2}",params={"speaker":i})
+                        self.start_subprotocol(f"bracha_lite_{i*(N+1)+i2}",params={"speaker":i})
         if PARTY_ID == self.dealer:
             Ses=params["input"]
             assert(isinstance(Ses,list))
@@ -172,7 +172,7 @@ class WBAVSS(BaseProtocol):
                     if not consistent(index,self.share[i],exch[i]):
                         correct=False
                 if correct:
-                    self.start_subprotocol(f"bracha_{PARTY_ID*(N+1)+index}",params={"speaker":PARTY_ID, "value":b""})
+                    self.start_subprotocol(f"bracha_lite_{PARTY_ID*(N+1)+index}",params={"speaker":PARTY_ID, "value":b""})
             self.exchanges={}
         self.check_star()
 
