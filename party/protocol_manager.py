@@ -19,15 +19,13 @@ class ProtocolManager:
         protocol_path=extract_protocol_path(messagepath)
         while path != protocol_path:
             protocol=PROTOCOLS.get(extract_protocol_name(path))
-            subprotocols=protocol.get_subprotocols(params)
-            for subname,the_params in subprotocols.items():
-                subpath= make_protocol_path(path,subname)
-                if protocol_path.startswith(subpath):
-                    path=subpath
-                    params=the_params
-                    break
-            else:
+            full_name=messagepath[len(path):].split("/")[0]
+            subname,the_params=protocol.get_subprotocol(params,full_name)
+            if not subname:
                 return None
+            subpath= make_protocol_path(path,subname)
+            path=subpath
+            params=the_params
         protocol=PROTOCOLS.get(extract_protocol_name(path))
         messagename,by=extract_indexed_message_name(messagepath)
         return protocol.get_schema(messagename,by,params)
@@ -47,7 +45,11 @@ class ProtocolManager:
             self.mailbox[messageid]=message.get("data")
             protocol_path=extract_protocol_path(messageid)
             if protocol_path in self.attivi:
-                self.run_hook(protocol_path)
+                messagedata= self.mailbox.get(messageid)
+                if messagedata is not None:
+                    self.mailbox.pop(messageid)
+                    message,by=extract_indexed_message_name(messageid)
+                    self.attivi[protocol_path].handle_message(message,by,messagedata)
         else:
             log(f"rejected message {messageid=}")
 

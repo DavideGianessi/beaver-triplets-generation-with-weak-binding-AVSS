@@ -13,7 +13,7 @@ def handle_messages(manager):
 
 def main():
     networking.start_network()
-    time.sleep(20)
+    time.sleep(5)
     print(f"|{PARTY_ID}| starting")
     manager = ProtocolManager(f"/{MAIN}_0/")
     manager.start_protocol(f"/{MAIN}_0/")

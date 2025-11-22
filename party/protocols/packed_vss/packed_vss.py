@@ -33,6 +33,22 @@ class PackedVSS(BaseProtocol):
         empty= {"type":"bytes","len":0}
         return {"bracha_0": {"speaker":params["dealer"],"content_schema": star_schema}} | \
             {f"bracha_lite_{i*(N+1)+i2}": {"speaker":i} for i in range(1,N+1) for i2 in range(1,N+1) if i!=i2}
+    @staticmethod
+    def get_subprotocol(params,full_name):
+        star_schema= {"type":"dict","keys": {
+            "C":{"type": "list", "maxlen":N, "items": {"type": "int", "min": 1, "max": N}},
+            "D":{"type": "list", "maxlen":N, "items": {"type": "int", "min": 1, "max": N}},
+            "G":{"type": "list", "maxlen":N, "items": {"type": "int", "min": 1, "max": N}},
+            "F":{"type": "list", "maxlen":N, "items": {"type": "int", "min": 1, "max": N}},
+          }}
+        empty= {"type":"bytes","len":0}
+        if full_name=="bracha_0":
+            return full_name,{"speaker":params["dealer"],"content_schema": star_schema}
+        if full_name.startswith("bracha_lite_") and full_name[len("bracha_lite_"):].isdigit():
+            i, i2 = divmod(int(full_name[len("bracha_lite_"):]), N+1)
+            if f"bracha_lite_{i*(N+1)+i2}" == full_name and 1<=i<=N and 1<=i2<=N and i!=i2:
+                return full_name,{"speaker":i}
+        return None,None
 
     @staticmethod
     def get_schema(message,by,params):

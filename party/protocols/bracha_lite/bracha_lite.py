@@ -24,6 +24,10 @@ class BrachaLite(BaseProtocol):
         return []
 
     @staticmethod
+    def get_subprotocol(params,full_name):
+        return None,None
+
+    @staticmethod
     def get_schema(message,by,params):
         if message=="ready":
             return {"type": "bytes", "len": 0 }

@@ -21,7 +21,7 @@ services:
       - N_PARTIES=$N
       - MODULUS=$MODULUS
       - MAIN=$PROTOCOL
-      - GRACE_PERIOD=20
+      - GRACE_PERIOD=5
       - AMOUNT=$AMOUNT
       - BASE_PORT=5000
     volumes:

@@ -39,6 +39,14 @@ class TripleSharing(BaseProtocol):
         return {"packed_vss_0": {"dealer": 3,"batching":sharing_batching}, "wbavss_0": {"dealer": 3,"batching":verification_batching}}
 
     @staticmethod
+    def get_subprotocol(params,full_name):
+        if full_name=="packed_vss_0":
+            return full_name,{"dealer": 3,"batching":sharing_batching}
+        if full_name=="wbavss_0":
+            return full_name,{"dealer": 3,"batching":verification_batching}
+        return None,None
+
+    @staticmethod
     def get_schema(message,by,params):
         return None
 
